@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"os/exec"
 
@@ -17,6 +18,7 @@ type sprite struct {
 
 var maze []string
 var player sprite
+var ghosts []*sprite
 
 func loadMaze(file string) error {
 	f, err := os.Open(file)
@@ -36,6 +38,8 @@ func loadMaze(file string) error {
 			switch char {
 			case 'P':
 				player = sprite{row, col}
+			case 'G':
+				ghosts = append(ghosts, &sprite{row, col})
 			}
 		}
 	}
@@ -55,6 +59,11 @@ func printScreen() {
 			}
 		}
 		fmt.Println()
+	}
+
+	for _, g := range ghosts {
+		simpleansi.MoveCursor(g.row, g.col)
+		fmt.Print("G")
 	}
 
 	simpleansi.MoveCursor(player.row, player.col)
@@ -127,6 +136,24 @@ func movePlayer(dir string) {
 	player.row, player.col = makeMove(player.row, player.col, dir)
 }
 
+func drawDirection() string {
+	dir := rand.Intn(4)
+	move := map[int]string{
+		0: "UP",
+		1: "DOWN",
+		2: "RIGHT",
+		3: "LEFT",
+	}
+	return move[dir]
+}
+
+func moveGhosts() {
+	for _, g := range ghosts {
+		dir := drawDirection()
+		g.row, g.col = makeMove(g.row, g.col, dir)
+	}
+}
+
 func initialise() {
 	cbTerm := exec.Command("stty", "cbreak", "-echo")
 	cbTerm.Stdin = os.Stdin
@@ -173,6 +200,7 @@ func main() {
 
 		// process movement
 		movePlayer(input)
+		moveGhosts()
 		// process collisions
 
 		// check game over
