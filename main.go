@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/danicat/simpleansi"
 	"log"
 	"os"
 	"os/exec"
@@ -26,28 +27,9 @@ func loadMaze(file string) error {
 }
 
 func printScreen() {
+	simpleansi.ClearScreen()
 	for _, line := range maze {
 		fmt.Println(line)
-	}
-}
-
-func main() {
-
-	initialise()
-	defer cleanup()
-
-	//load resources
-	err := loadMaze("maze01.txt")
-	if err != nil {
-		log.Println("failed to load maze:", err)
-		return
-	}
-
-	//game loop
-	for {
-		printScreen()
-
-		break
 	}
 }
 
@@ -84,4 +66,42 @@ func readInput() (string, error) {
 	}
 
 	return "", nil
+}
+
+func main() {
+
+	initialise()
+	defer cleanup()
+
+	//load resources
+	err := loadMaze("maze01.txt")
+	if err != nil {
+		log.Println("failed to load maze:", err)
+		return
+	}
+
+	//game loop
+	for {
+		//update screen
+		printScreen()
+
+		//process input
+		input, err := readInput()
+		if err != nil {
+			log.Println("error reading input:", err)
+			break
+		}
+
+		//process movement
+
+		//process collisions
+
+		//check game over
+		if input == "ESC" {
+			break
+		}
+
+		//repeat
+
+	}
 }
