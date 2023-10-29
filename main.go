@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"github.com/danicat/simpleansi"
 	"log"
@@ -16,12 +17,40 @@ type sprite struct {
 	col int
 }
 
+type Config struct {
+	Player   string `json:"player"`
+	Ghost    string `json:"ghost"`
+	Wall     string `json:"wall"`
+	Dot      string `json:"dot"`
+	Pill     string `json:"pill"`
+	Death    string `json:"death"`
+	Space    string `json:"space"`
+	UseEmoji bool   `json:"use_emoji"`
+}
+
+var cfg Config
+
 var maze []string
 var player sprite
 var ghosts []*sprite
 var score int
 var numDots int
 var lives = 1
+
+func loadConfig(file string) error {
+	f, err := os.Open(file)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	decoder := json.NewDecoder(f)
+	err = decoder.Decode(&cfg)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func loadMaze(file string) error {
 	f, err := os.Open(file)
@@ -58,28 +87,26 @@ func printScreen() {
 		for _, chr := range line {
 			switch chr {
 			case '#':
-				fallthrough
+				fmt.Print(simpleansi.WithBlueBackground(cfg.Wall))
 			case '.':
-				fmt.Printf("%c", chr)
+				fmt.Print(cfg.Dot)
 			default:
-				fmt.Print(" ")
+				fmt.Print(cfg.Space)
 			}
 		}
 		fmt.Println()
 	}
 
 	for _, g := range ghosts {
-		simpleansi.MoveCursor(g.row, g.col)
-		fmt.Print("G")
+		moveCursor(g.row, g.col)
+		fmt.Print(cfg.Ghost)
 	}
 
-	simpleansi.MoveCursor(player.row, player.col)
-	fmt.Print("P")
+	moveCursor(player.row, player.col)
+	fmt.Print(cfg.Player)
 
-	simpleansi.MoveCursor(len(maze)+1, 0)
+	moveCursor(len(maze)+1, 0)
 	fmt.Println("Score: ", score, "\tLives: ", lives)
-
-	simpleansi.MoveCursor(len(maze)+1, 0)
 }
 
 func readInput() (string, error) {
@@ -144,11 +171,19 @@ func makeMove(oldRow, oldCol int, dir string) (newRow, newCol int) {
 
 func movePlayer(dir string) {
 	player.row, player.col = makeMove(player.row, player.col, dir)
+
+	removeDot := func(row, col int) {
+		maze[row] = maze[row][0:col] + " " + maze[row][col+1:]
+	}
+
 	switch maze[player.row][player.col] {
 	case '.':
 		numDots--
 		score++
-		maze[player.row] = maze[player.row][0:player.col] + " " + maze[player.row][player.col+1:]
+		removeDot(player.row, player.col)
+	case 'X':
+		score += 10
+		removeDot(player.row, player.col)
 	}
 }
 
@@ -190,6 +225,14 @@ func cleanup() {
 	}
 }
 
+func moveCursor(row, col int) {
+	if cfg.UseEmoji {
+		simpleansi.MoveCursor(row, col*2)
+	} else {
+		simpleansi.MoveCursor(row, col)
+	}
+}
+
 func main() {
 	// initialise game
 	initialise()
@@ -199,6 +242,12 @@ func main() {
 	err := loadMaze("maze01.txt")
 	if err != nil {
 		log.Println("failed to load maze:", err)
+		return
+	}
+
+	err = loadConfig("config.json")
+	if err != nil {
+		log.Println("failed to load configuration:", err)
 		return
 	}
 
@@ -241,7 +290,12 @@ func main() {
 		printScreen()
 
 		// check game over
-		if numDots == 0 || lives <= 0 {
+		if numDots == 0 || lives == 0 {
+			if lives == 0 {
+				moveCursor(player.row, player.col)
+				fmt.Print(cfg.Death)
+				moveCursor(len(maze)+2, 0)
+			}
 			break
 		}
 
