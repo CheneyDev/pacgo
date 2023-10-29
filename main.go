@@ -58,7 +58,7 @@ func printScreen() {
 	}
 
 	simpleansi.MoveCursor(player.row, player.col)
-	fmt.Print('P')
+	fmt.Print("P")
 
 	simpleansi.MoveCursor(len(maze)+1, 0)
 }
@@ -172,7 +172,7 @@ func main() {
 		}
 
 		// process movement
-
+		movePlayer(input)
 		// process collisions
 
 		// check game over
