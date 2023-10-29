@@ -3,13 +3,20 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/danicat/simpleansi"
 	"log"
 	"os"
 	"os/exec"
+
+	"github.com/danicat/simpleansi"
 )
 
+type sprite struct {
+	row int
+	col int
+}
+
 var maze []string
+var player sprite
 
 func loadMaze(file string) error {
 	f, err := os.Open(file)
@@ -23,6 +30,16 @@ func loadMaze(file string) error {
 		line := scanner.Text()
 		maze = append(maze, line)
 	}
+
+	for row, line := range maze {
+		for col, char := range line {
+			switch char {
+			case 'P':
+				player = sprite{row, col}
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -30,26 +47,6 @@ func printScreen() {
 	simpleansi.ClearScreen()
 	for _, line := range maze {
 		fmt.Println(line)
-	}
-}
-
-func initialise() {
-	cbTerm := exec.Command("stty", "cbreak", "-echo")
-	cbTerm.Stdin = os.Stdin
-
-	err := cbTerm.Run()
-	if err != nil {
-		log.Fatalln("unable to active cbreak mode: ", err)
-	}
-}
-
-func cleanup() {
-	cookedTerm := exec.Command("stty", "-cbreak", "echo")
-	cookedTerm.Stdin = os.Stdin
-
-	err := cookedTerm.Run()
-	if err != nil {
-		log.Fatalln("unable to restore cooked mode: ", err)
 	}
 }
 
@@ -68,40 +65,59 @@ func readInput() (string, error) {
 	return "", nil
 }
 
-func main() {
+func initialise() {
+	cbTerm := exec.Command("stty", "cbreak", "-echo")
+	cbTerm.Stdin = os.Stdin
 
+	err := cbTerm.Run()
+	if err != nil {
+		log.Fatalln("unable to activate cbreak mode:", err)
+	}
+}
+
+func cleanup() {
+	cookedTerm := exec.Command("stty", "-cbreak", "echo")
+	cookedTerm.Stdin = os.Stdin
+
+	err := cookedTerm.Run()
+	if err != nil {
+		log.Fatalln("unable to activate cooked mode:", err)
+	}
+}
+
+func main() {
+	// initialise game
 	initialise()
 	defer cleanup()
 
-	//load resources
+	// load resources
 	err := loadMaze("maze01.txt")
 	if err != nil {
 		log.Println("failed to load maze:", err)
 		return
 	}
 
-	//game loop
+	// game loop
 	for {
-		//update screen
+		// update screen
 		printScreen()
 
-		//process input
+		// process input
 		input, err := readInput()
 		if err != nil {
 			log.Println("error reading input:", err)
 			break
 		}
 
-		//process movement
+		// process movement
 
-		//process collisions
+		// process collisions
 
-		//check game over
+		// check game over
 		if input == "ESC" {
 			break
 		}
 
-		//repeat
-
+		// repeat
 	}
 }
