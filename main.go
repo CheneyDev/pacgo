@@ -5,9 +5,20 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 )
 
 var maze []string
+
+func initialise()  {
+	cdTerm:=exec.Command("stty","cbreak","-echo")
+	cdTerm.Stdin=os.Stdin
+
+	err:=cdTerm.Run()
+	if err != nil {
+		log.Fatalln("unable to active cbreak mode: "err)
+	}
+}
 
 func loadMaze(file string) error {
 	f, err := os.Open(file)
