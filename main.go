@@ -11,12 +11,22 @@ import (
 var maze []string
 
 func initialise()  {
-	cdTerm:=exec.Command("stty","cbreak","-echo")
-	cdTerm.Stdin=os.Stdin
+	cbTerm:=exec.Command("stty","cbreak","-echo")
+	cbTerm.Stdin=os.Stdin
 
-	err:=cdTerm.Run()
+	err:=cbTerm.Run()
 	if err != nil {
 		log.Fatalln("unable to active cbreak mode: "err)
+	}
+}
+
+func cleanup()  {
+	cookedTerm:=exec.Command("stty","-cbreak","echo")
+	cookedTerm.Stdin=os.Stdin
+
+	err:=cookedTerm.Run()
+	if err != nil {
+		log.Fatalln("unable to restore cooked mode: "err)
 	}
 }
 
