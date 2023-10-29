@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 )
 
@@ -26,5 +27,22 @@ func loadMaze(file string) error {
 func printScreen() {
 	for _, line := range maze {
 		fmt.Println(line)
+	}
+}
+
+func main() {
+
+	//load resources
+	err := loadMaze("maze01.txt")
+	if err != nil {
+		log.Println("failed to load maze:", err)
+		return
+	}
+
+	//game loop
+	for {
+		printScreen()
+
+		break
 	}
 }
