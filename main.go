@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 )
 
@@ -20,4 +21,10 @@ func loadMaze(file string) error {
 		maze = append(maze, line)
 	}
 	return nil
+}
+
+func printScreen() {
+	for _, line := range maze {
+		fmt.Println(line)
+	}
 }
