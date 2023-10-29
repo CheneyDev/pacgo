@@ -3,12 +3,12 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/danicat/simpleansi"
 	"log"
 	"math/rand"
 	"os"
 	"os/exec"
-
-	"github.com/danicat/simpleansi"
+	"time"
 )
 
 type sprite struct {
@@ -202,32 +202,50 @@ func main() {
 		return
 	}
 
+	//process input (async)
+	input := make(chan string)
+	go func(ch chan<- string) {
+		for {
+			input, err := readInput()
+			if err != nil {
+				log.Println("error reading input:", err)
+				ch <- "ESC"
+			}
+			ch <- input
+
+		}
+	}(input)
+
 	// game loop
 	for {
-		// update screen
-		printScreen()
-
-		// process input
-		input, err := readInput()
-		if err != nil {
-			log.Println("error reading input:", err)
-			break
+		// process movement
+		select {
+		case inp := <-input:
+			if inp == "ESC" {
+				lives = 0
+			}
+			movePlayer(inp)
+		default:
 		}
 
-		// process movement
-		movePlayer(input)
 		moveGhosts()
+
 		// process collisions
 		for _, g := range ghosts {
 			if player == *g {
 				lives = 0
 			}
 		}
+
+		// update screen
+		printScreen()
+
 		// check game over
-		if input == "ESC" || numDots == 0 || lives <= 0 {
+		if numDots == 0 || lives <= 0 {
 			break
 		}
 
 		// repeat
+		time.Sleep(200 * time.Millisecond)
 	}
 }
